@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>رسالة لآلاء</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#17111c">
+<meta property="og:title" content="رسالة لآلاء">
+<meta property="og:description" content="افتحيها والصوت شغال.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Tajawal:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one phone-sized screen, four scenes that hand over to each other:
+   monitor (flat line) -> ECG paper strip (the letter) -> four waves (what I see in you) -> heart (the question). */
+:root{
+  color-scheme: dark;
+  --ink:#17111c;
+  --panel:#231a2b;
+  --line:#3a2c44;
+  --trace:#ff8e86;
+  --gold:#e8c07d;
+  --text:#f6ebef;
+  --muted:#ad9aa6;
+  --paper:#fcf2ea;
+  --paper-grid:#f3c4bd;
+  --paper-ink:#3b2430;
+  --display:"Aref Ruqaa","Amiri","Times New Roman",serif;
+  --body:"Tajawal","Segoe UI",Tahoma,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:var(--ink);
+  color:var(--text);
+  font-family:var(--body);
+  font-size:17px;
+  line-height:1.75;
+  -webkit-tap-highlight-color:transparent;
+}
+.app{
+  height:100%;
+  max-width:460px;
+  margin:0 auto;
+  padding:18px 18px 48px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.steps{display:flex;gap:6px;direction:ltr}
+.steps i{flex:1;height:3px;border-radius:2px;background:var(--line);transition:background .5s}
+.steps i.done{background:var(--trace)}
+
+.scene{flex:1;min-height:0;display:flex;flex-direction:column;gap:18px}
+.scene[hidden]{display:none}
+.scene.enter{animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+
+h1,h2{font-family:var(--display);font-weight:700;margin:0;line-height:1.35;text-wrap:balance}
+h1{font-size:2.1rem}
+h2{font-size:1.7rem}
+p{margin:0}
+.muted{color:var(--muted)}
+
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.btn{
+  align-self:stretch;
+  padding:14px 18px;
+  border-radius:14px;
+  background:var(--trace);
+  color:#2a1218;
+  font-weight:700;
+  font-size:1.05rem;
+  transition:transform .15s;
+}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
+.btn.ghost.run{position:fixed;z-index:5;align-self:auto;background:var(--panel);white-space:nowrap;transition:left .28s cubic-bezier(.2,.7,.2,1),top .28s cubic-bezier(.2,.7,.2,1)}
+.spacer{flex:1}
+.sound{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:4;font-size:.8rem;color:var(--muted);padding:4px 16px;border:1px solid var(--line);border-radius:999px;background:var(--ink)}
+.sound[hidden]{display:none}
+
+/* Scene 1: monitor */
+.monitor{
+  background:#0f0a13;
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:12px 14px 6px;
+  direction:ltr;
+  position:relative;
+  overflow:hidden;
+}
+.monitor.flash::after{
+  content:"";position:absolute;inset:0;background:#fff;opacity:0;animation:flash .5s ease-out;
+}
+@keyframes flash{0%{opacity:.85}100%{opacity:0}}
+.hud{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:.74rem;color:var(--muted);letter-spacing:.04em}
+.hud b{font-weight:500;font-size:1.7rem;color:var(--trace);font-variant-numeric:tabular-nums}
+canvas{display:block;width:100%;height:150px}
+.heartbtn{
+  align-self:center;
+  width:104px;height:104px;border-radius:50%;
+  background:var(--panel);
+  border:1px solid var(--line);
+  display:grid;place-items:center;
+  animation:nudge 2.2s ease-in-out infinite;
+}
+.heartbtn svg{width:50px;height:50px;fill:var(--trace)}
+.heartbtn.beat{animation:beat .83s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes beat{0%,100%{transform:scale(1)}12%{transform:scale(1.14)}26%{transform:scale(.98)}}
+.hint{text-align:center;font-size:.92rem}
+
+/* Scene 2: ECG paper letter */
+.paper{
+  flex:1;min-height:0;overflow-y:auto;
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--paper-grid) 1px,transparent 1px),
+    linear-gradient(90deg,var(--paper-grid) 1px,transparent 1px);
+  background-size:20px 20px;
+  color:var(--paper-ink);
+  border-radius:6px 6px 16px 16px;
+  padding:14px 20px 22px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.scene.enter .paper{animation:print 1.1s cubic-bezier(.2,.7,.2,1) both}
+@keyframes print{from{transform:translateY(70%);opacity:.3}to{transform:none;opacity:1}}
+.strip{direction:ltr;font-family:var(--mono);font-size:.68rem;display:flex;justify-content:space-between;opacity:.65;border-bottom:1px dashed var(--paper-ink);padding-bottom:6px}
+.paper h2{font-size:1.9rem}
+.paper p{font-size:1.08rem;font-weight:500;transition:opacity .9s,transform .9s}
+.paper p.wait{opacity:0;transform:translateY(8px)}
+.paper .love{font-family:var(--display);font-size:1.6rem;font-weight:700;color:#b8323f}
+
+/* Scene 3: waves */
+.complex{width:100%;height:auto;direction:ltr}
+.complex path{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:3}
+.complex .seg{stroke:var(--line);transition:stroke .6s,filter .6s}
+.complex .seg.on{stroke:var(--trace);filter:drop-shadow(0 0 5px rgba(255,142,134,.7))}
+.complex .heart{stroke:var(--trace);stroke-dasharray:420;stroke-dashoffset:420;opacity:0}
+.complex.whole .seg.w{opacity:0;transition:opacity .6s}
+.complex.whole .heart{opacity:1;animation:draw 1.6s .3s ease-in-out forwards;filter:drop-shadow(0 0 6px rgba(255,142,134,.8))}
+@keyframes draw{to{stroke-dashoffset:0}}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{
+  min-height:128px;
+  padding:12px;
+  border-radius:14px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;
+  text-align:center;
+  transition:background .5s,border-color .5s;
+}
+.card .wave{font-family:var(--mono);font-size:1.5rem;color:var(--gold);direction:ltr}
+.card .tap{font-size:.82rem;color:var(--muted)}
+.card .say{display:none;font-size:.98rem;line-height:1.6}
+.card[aria-pressed="true"]{background:#2d2030;border-color:var(--trace)}
+.card[aria-pressed="true"] .tap{display:none}
+.card[aria-pressed="true"] .wave{font-size:.8rem}
+.card[aria-pressed="true"] .say{display:block;animation:rise .5s both}
+.verdict{text-align:center;min-height:3.4em}
+.verdict .mono{font-family:var(--mono);font-size:.8rem;color:var(--gold);direction:ltr;display:block}
+
+/* Scene 4: question */
+.big-heart{align-self:center;width:120px;height:120px;fill:var(--trace);animation:beat .83s ease-in-out infinite;filter:drop-shadow(0 0 18px rgba(255,142,134,.45))}
+.center{text-align:center}
+.answer{
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:16px;text-align:center;font-size:1.05rem;
+}
+.answer:empty{display:none}
+.sign a{color:inherit;text-decoration:underline;text-underline-offset:7px;padding:6px 12px}
+.sign a:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.sign{font-family:var(--display);font-size:1.3rem;color:var(--gold);text-align:center}
+.choices{display:flex;flex-direction:column;gap:10px}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .complex.whole .heart{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <button class="sound" id="sound" hidden>كتم الصوت</button>
+  <div class="steps" aria-hidden="true"><i class="done"></i><i></i><i></i><i></i></div>
+
+  <!-- 1 -->
+  <section class="scene" id="s1">
+    <div class="monitor" id="monitor">
+      <div class="hud"><span>LEAD II · 25 mm/s</span><span>HR <b id="hr">--</b></span></div>
+      <canvas id="ecg" aria-label="رسم قلب"></canvas>
+    </div>
+    <h1 id="t1">آلاء، من ساعة ما زعلتي والخط ده واقف.</h1>
+    <p class="muted" id="p1">ده قلبي. ومحدش غيرك بيعرف يشغّله.</p>
+    <div class="spacer"></div>
+    <button class="heartbtn" id="shock" aria-label="دوسي على القلب">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-10-9.3C.4 8.300 2 4.500 5.600 4.100 7.900 3.900 10 5 12 7.400c2-2.400 4.100-3.500 6.400-3.300C22 4.500 23.600 8.300 22 11.700 19.500 16.400 12 21 12 21z"/></svg>
+    </button>
+    <p class="hint muted" id="hint1">دوسي على القلب</p>
+    <button class="btn" id="toLetter" hidden>اطبعي اللي جواه</button>
+  </section>
+
+  <!-- 2 -->
+  <section class="scene" id="s2" hidden>
+    <div class="paper" id="paper">
+      <div class="strip"><span>10 mm/mV</span><span>Pt: Alaa</span><span>25 mm/s</span></div>
+      <h2>آلاء،</h2>
+      <p>عارف إنك زعلانة، وعارف إن كلامي وصلك بطريقة حسستك إني مش مقدّرك.</p>
+      <p>مش ده اللي جوايا. بس اللي حسيتيه هو اللي يهمني دلوقتي، مش اللي كنت أقصده.</p>
+      <p>آسف إني خليتك تشكّي ولو لحظة في قيمتك عندي.</p>
+      <p>أنا عمري ما شفتك قليلة. أنا شايف سعيك بين الشغل والمذاكرة والماجستير، وشايف تعبك اللي محدش بيشوفه.</p>
+      <p>وفخور بيكي. كمّلي، وأنا في ضهرك.</p>
+      <p class="love">وبحبك.</p>
+      <p>ولأن الكلام العام سهل، خليني أقولك أنا شايف فيكي إيه بالظبط.</p>
+    </div>
+    <button class="btn" id="toWaves">وريني</button>
+  </section>
+
+  <!-- 3 -->
+  <section class="scene" id="s3" hidden>
+    <h2>النبضة الواحدة أربع حتت. وكل حتة فيها إنتي.</h2>
+    <svg class="complex" id="complex" viewBox="0 0 320 120" role="img" aria-label="نبضة قلب بتكمل مع كل كارت">
+      <path class="seg on" d="M0 80 L40 80"/>
+      <path class="seg w" data-w="p" d="M40 80 Q60 54 80 80"/>
+      <path class="seg w" data-w="qrs" d="M80 80 L104 80 L112 90 L126 14 L138 104 L146 80"/>
+      <path class="seg w" data-w="st" d="M146 80 L186 80"/>
+      <path class="seg w" data-w="t" d="M186 80 Q216 38 246 80"/>
+      <path class="seg on" d="M246 80 L320 80"/>
+      <path class="heart" d="M40 80 L108 80 C96 62 100 34 124 30 C140 28 154 38 160 52 C166 38 180 28 196 30 C220 34 224 62 212 80 C200 96 178 106 160 114 C142 106 120 96 108 80 M212 80 L246 80"/>
+    </svg>
+    <div class="cards">
+      <button class="card" aria-pressed="false" data-w="p">
+        <span class="wave">P</span><span class="tap">اقلبي</span>
+        <span class="say">اجتهادك. مشفتش حد بيتعب على نفسه زيك.</span>
+      </button>
+      <button class="card" aria-pressed="false" data-w="qrs">
+        <span class="wave">QRS</span><span class="tap">اقلبي</span>
+        <span class="say">شغلك. دكتورة شاطرة ونشيطة، وشغلك بيتكلم عنك قبل أي حد.</span>
+      </button>
+      <button class="card" aria-pressed="false" data-w="st">
+        <span class="wave">ST</span><span class="tap">اقلبي</span>
+        <span class="say">مذاكرتك والماجستير. بتسعي في كله مع بعض ومبتقفيش.</span>
+      </button>
+      <button class="card" aria-pressed="false" data-w="t">
+        <span class="wave">T</span><span class="tap">اقلبي</span>
+        <span class="say">وجودك. وسط كل ده لسه بتخلي يومي أخف.</span>
+      </button>
+    </div>
+    <p class="verdict muted" id="verdict" aria-live="polite">اقلبي الأربعة وشوفي الرسم.</p>
+    <div class="spacer"></div>
+    <button class="btn" id="toEnd" hidden>آخر حاجة</button>
+  </section>
+
+  <!-- 4 -->
+  <section class="scene" id="s4" hidden>
+    <div class="spacer"></div>
+    <svg class="big-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-10-9.3C.4 8.300 2 4.500 5.600 4.100 7.900 3.900 10 5 12 7.400c2-2.400 4.100-3.500 6.400-3.300C22 4.500 23.600 8.300 22 11.700 19.500 16.400 12 21 12 21z"/></svg>
+    <h1 class="center">نتكلم؟</h1>
+    <p class="center muted">هسمعك للآخر، من غير ما أدافع عن نفسي.</p>
+    <div class="choices" id="choices">
+      <button class="btn" id="yes">آه، كلمني</button>
+      <button class="btn ghost" id="later">لسه محتاجة وقت</button>
+    </div>
+    <p class="answer" id="answer" aria-live="polite"></p>
+    <p class="sign"><a href="https://wa.me/qr/ZXUE6IQRTH7NF1" target="_blank" rel="noopener">عبدالرحمن</a></p>
+    <div class="spacer"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $ = function(id){ return document.getElementById(id); };
+  var steps = document.querySelectorAll('.steps i');
+
+  function go(n){
+    for (var i=1;i<=4;i++){
+      var s = $('s'+i);
+      s.hidden = (i!==n);
+      s.classList.toggle('enter', i===n);
+      steps[i-1].classList.toggle('done', i<=n);
+    }
+  }
+
+  /* ---------- ECG monitor ---------- */
+  var cv = $('ecg'), ctx = cv.getContext('2d');
+  var W=0, H=0, x=0, prevY=null, t=0, beating=false, shockAt=-1, last=0, running=true;
+  var PERIOD = 0.83; // 72 bpm
+
+  function size(){
+    var dpr = window.devicePixelRatio || 1;
+    var r = cv.getBoundingClientRect();
+    W = Math.max(200, r.width); H = Math.max(100, r.height);
+    cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.lineWidth = 2.2; ctx.lineJoin='round'; ctx.lineCap='round';
+    ctx.strokeStyle = '#ff8e86'; ctx.shadowColor='rgba(255,142,134,.8)'; ctx.shadowBlur=8;
+    x=0; prevY=null;
+    if (reduce) drawStatic();
+  }
+  function g(p,c,w,a){ var d=(p-c)/w; return a*Math.exp(-d*d); }
+  function wave(time){
+    if (shockAt>=0 && time-shockAt<0.16){ return Math.sin((time-shockAt)/0.16*Math.PI*3)*1.25; }
+    if (!beating) return 0;
+    var p = (time % PERIOD)/PERIOD;
+    return g(p,.20,.035,.12)+g(p,.37,.012,-.12)+g(p,.40,.014,1)+g(p,.435,.014,-.25)+g(p,.66,.06,.30);
+  }
+  function yAt(time){ return H*0.62 - wave(time)*H*0.48; }
+  function drawStatic(){
+    ctx.clearRect(0,0,W,H); ctx.beginPath();
+    for (var px=0;px<=W;px++){ var y=yAt(px/90); if(px===0) ctx.moveTo(px,y); else ctx.lineTo(px,y); }
+    ctx.stroke();
+  }
+  function frame(now){
+    if (!running) return;
+    var dt = Math.min(0.05,(now-last)/1000); last=now;
+    var adv = 90*dt, stepsN = Math.max(1,Math.round(adv));
+    for (var i=0;i<stepsN;i++){
+      t += dt/stepsN;
+      var nx = x + adv/stepsN, y = yAt(t);
+      if (nx>=W){ nx=0; prevY=null; x=0; }
+      ctx.save(); ctx.shadowBlur=0; ctx.clearRect(nx,0,16,H); ctx.restore();
+      if (prevY!==null){ ctx.beginPath(); ctx.moveTo(x,prevY); ctx.lineTo(nx,y); ctx.stroke(); }
+      x=nx; prevY=y;
+    }
+    requestAnimationFrame(frame);
+  }
+  size();
+  window.addEventListener('resize', size);
+  if (!reduce){ last=performance.now(); requestAnimationFrame(frame); }
+
+  $('shock').addEventListener('click', function(){
+    if (beating) return;
+    shockAt = t; beating = true; startSound();
+    $('monitor').classList.add('flash');
+    this.classList.add('beat');
+    $('t1').textContent = 'شايفة؟ لمسة منك رجّعته.';
+    $('p1').textContent = 'هو أصلاً بيدق عشانك. وجواه كلام عايز يطلع.';
+    $('hint1').hidden = true;
+    $('toLetter').hidden = false;
+    var hr=$('hr'), n=0;
+    var iv = setInterval(function(){ n+=6; if(n>=72){n=72;clearInterval(iv);} hr.textContent=n; }, 80);
+    if (reduce) drawStatic();
+  });
+
+  /* ---------- Heartbeat sound (lub-dub, 72 bpm) ---------- */
+  var AC = null, master = null, soundOn = true, nextBeat = 0;
+  function thump(at, f, g){
+    var o = AC.createOscillator(), v = AC.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(f, at);
+    o.frequency.exponentialRampToValueAtTime(f * 0.45, at + 0.13);
+    v.gain.setValueAtTime(0.0001, at);
+    v.gain.exponentialRampToValueAtTime(g, at + 0.012);
+    v.gain.exponentialRampToValueAtTime(0.0001, at + 0.2);
+    o.connect(v); v.connect(master);
+    o.start(at); o.stop(at + 0.24);
+  }
+  function pump(){
+    if (!AC || AC.state !== 'running') return;
+    if (nextBeat < AC.currentTime) nextBeat = AC.currentTime + 0.05;
+    while (nextBeat < AC.currentTime + 0.6){
+      thump(nextBeat, 120, 0.9);
+      thump(nextBeat + 0.27, 150, 0.55);
+      nextBeat += PERIOD;
+    }
+  }
+  function startSound(){
+    try{
+      var C = window.AudioContext || window.webkitAudioContext;
+      if (!C) return;
+      AC = new C();
+      master = AC.createGain();
+      master.gain.value = 0.8;
+      master.connect(AC.destination);
+      if (AC.resume) AC.resume();
+      nextBeat = AC.currentTime + 0.25;
+      pump();
+      setInterval(pump, 200);
+      $('sound').hidden = false;
+    }catch(e){ AC = null; }
+  }
+  $('sound').addEventListener('click', function(){
+    if (!AC) return;
+    soundOn = !soundOn;
+    master.gain.value = soundOn ? 0.8 : 0;
+    if (soundOn && AC.resume) AC.resume();
+    this.textContent = soundOn ? 'كتم الصوت' : 'شغّلي الصوت';
+  });
+  document.addEventListener('visibilitychange', function(){
+    if (!AC) return;
+    try{ if (document.hidden) AC.suspend(); else AC.resume(); }catch(e){}
+  });
+
+  /* ---------- Letter ---------- */
+  var timers=[];
+  function showAllLines(){
+    timers.forEach(clearTimeout); timers=[];
+    document.querySelectorAll('#paper p').forEach(function(p){ p.classList.remove('wait'); });
+  }
+  $('toLetter').addEventListener('click', function(){
+    running=false;
+    go(2);
+    var lines = document.querySelectorAll('#paper p');
+    if (reduce) return;
+    lines.forEach(function(p,i){
+      p.classList.add('wait');
+      timers.push(setTimeout(function(){
+        p.classList.remove('wait');
+        p.scrollIntoView({block:'nearest',behavior:'smooth'});
+      }, 1200 + i*1900));
+    });
+  });
+  $('paper').addEventListener('click', showAllLines);
+
+  /* ---------- Waves ---------- */
+  $('toWaves').addEventListener('click', function(){ showAllLines(); go(3); });
+  var opened=0;
+  document.querySelectorAll('.card').forEach(function(c){
+    c.addEventListener('click', function(){
+      if (c.getAttribute('aria-pressed')==='true') return;
+      c.setAttribute('aria-pressed','true');
+      var seg = document.querySelector('.seg[data-w="'+c.dataset.w+'"]');
+      if (seg) seg.classList.add('on');
+      opened++;
+      if (opened===4){
+        $('verdict').classList.remove('muted');
+        $('verdict').innerHTML = '<span class="mono">Normal sinus rhythm</span>النبضة ما بتكملش من غير ولا حاجة فيهم. ولا من غيرك.';
+        setTimeout(function(){ $('complex').classList.add('whole'); }, reduce?0:900);
+        $('toEnd').hidden = false;
+      } else {
+        $('verdict').textContent = 'فاضل ' + (4-opened) + '.';
+      }
+    });
+  });
+
+  /* ---------- Question ---------- */
+  $('toEnd').addEventListener('click', function(){ go(4); });
+  $('yes').addEventListener('click', function(){
+    $('choices').hidden = true;
+    $('answer').textContent = 'دوسي على اسمي تحت وابعتيلي أي حاجة، حتى نقطة. وأنا هكلمك في ساعتها.';
+  });
+  var later = $('later'), fleeAt = 0, fleeN = 0;
+  var teases = ['متأكدة؟', 'طب فكري تاني', 'مش هتعرفي تمسكيني', 'الزرار التاني أسهل', 'وحشتيني بجد'];
+  function hits(a, b){ return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom); }
+  function flee(e){
+    if (e && e.preventDefault) e.preventDefault();
+    var now = Date.now();
+    if (now - fleeAt < 250) return;
+    fleeAt = now;
+    later.textContent = teases[fleeN % teases.length];
+    fleeN++;
+    later.classList.add('run');
+    var bw = later.offsetWidth, bh = later.offsetHeight;
+    var yes = $('yes').getBoundingClientRect();
+    var maxL = Math.max(12, window.innerWidth - bw - 12), maxT = Math.max(12, window.innerHeight - bh - 12);
+    var l = 12, t = 12;
+    for (var k = 0; k < 12; k++){
+      l = 12 + Math.random() * (maxL - 12);
+      t = 12 + Math.random() * (maxT - 12);
+      if (!hits({left:l, top:t, right:l+bw, bottom:t+bh}, {left:yes.left-10, top:yes.top-10, right:yes.right+10, bottom:yes.bottom+10})) break;
+    }
+    later.style.left = l + 'px';
+    later.style.top = t + 'px';
+    later.blur();
+  }
+  later.addEventListener('pointerdown', flee);
+  later.addEventListener('focus', flee);
+  later.addEventListener('click', flee);
+})();
+</script>
+</body>
+</html>
